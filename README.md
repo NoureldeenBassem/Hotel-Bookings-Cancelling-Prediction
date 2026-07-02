@@ -1,17 +1,31 @@
-# Hotel Booking Cancellation Predictor
+# 🏨 Hotel Booking Cancellation Predictor
 
 **Built by Noureldin Bassem — Computer and AI Engineer**
 
+[![Python](https://img.shields.io/badge/Python-3.12-blue?logo=python&logoColor=white)](https://www.python.org/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-App-FF4B4B?logo=streamlit&logoColor=white)](https://hotel-bookings-cancelling-prediction-7q4gjskb3oopcu5ah7dggl.streamlit.app/)
+[![scikit-learn](https://img.shields.io/badge/scikit--learn-1.9.0-F7931E?logo=scikit-learn&logoColor=white)](https://scikit-learn.org/)
+[![XGBoost](https://img.shields.io/badge/XGBoost-3.3.0-2C8EBB)](https://xgboost.readthedocs.io/)
+
 🔗 **Live app:** [hotel-bookings-cancelling-prediction.streamlit.app](https://hotel-bookings-cancelling-prediction-7q4gjskb3oopcu5ah7dggl.streamlit.app/)
 
-A Streamlit app that predicts whether a hotel booking will be **canceled**, using a single saved `scikit-learn` `Pipeline` (preprocessing + XGBoost model) trained in `Hotel_Booking_Cancellation_Prediction_refined.ipynb`.
+A Streamlit app that predicts whether a hotel booking will be **canceled** ❌ or **honored** ✅, using a single saved `scikit-learn` `Pipeline` (preprocessing + XGBoost model) trained in `Hotel_Booking_Cancellation_Prediction_refined.ipynb`.
 
-- **Model:** XGBoost (selected as the best of 4 candidates: Logistic Regression, Decision Tree, Random Forest, XGBoost)
-- **Test F1:** 0.755
-- **Test ROC AUC:** 0.925
-- **Decision threshold:** 0.54 (tuned on leakage-safe out-of-fold predictions, never on the test set)
+<!--
+📸 Add a screenshot of the app here once you have one:
+![App screenshot](screenshot.png)
+-->
 
-## Repository contents
+## 📊 Model performance
+
+| Metric | Value |
+|---|---|
+| 🏆 Model | XGBoost (best of 4 candidates) |
+| 🎯 Test F1 | 0.755 |
+| 📈 Test ROC AUC | 0.925 |
+| ⚖️ Decision threshold | 0.54 (tuned on leakage-safe out-of-fold predictions) |
+
+## 🗂️ Repository contents
 
 ```
 .
@@ -25,7 +39,7 @@ A Streamlit app that predicts whether a hotel booking will be **canceled**, usin
 └── Hotel_Booking_Cancellation_Prediction_refined.ipynb   # Full training notebook, for reference
 ```
 
-## Data leakage audit (done before writing any deployment code)
+## 🔒 Data leakage audit (done before writing any deployment code)
 
 This was the top priority for this deployment, so here's exactly what was verified in the notebook and enforced in `app.py`:
 
@@ -36,9 +50,19 @@ This was the top priority for this deployment, so here's exactly what was verifi
 5. **`app.py` performs zero fitting.** It calls `joblib.load()` once (cached with `st.cache_resource`) and only ever calls `pipeline.predict_proba()`. The one function it reimplements, `engineer_features()`, is copied verbatim from the notebook and is **purely deterministic arithmetic/lookups** (nights = weekend nights + week nights, a fixed month-name→number dictionary, log1p, etc.) — it learns nothing from data, so recomputing it at inference time on a single user-submitted row cannot leak anything. All *learned* preprocessing (imputation medians, frequency-encoding maps, one-hot categories) lives inside `final_pipeline.joblib`, not in `app.py`.
 6. **Column order/set is enforced from the training artifact.** `app.py` reindexes the engineered input to `deployment_config.json["feature_columns"]` (the literal `list(X_train.columns)` saved at training time), so the `ColumnTransformer` always receives columns in the exact shape it was fit on.
 
-**Conclusion:** the deployment reuses the exact fitted pipeline object from training, never refits any preprocessing step, and reproduces only deterministic feature engineering at inference time. No data leakage is introduced.
+✅ **Conclusion:** the deployment reuses the exact fitted pipeline object from training, never refits any preprocessing step, and reproduces only deterministic feature engineering at inference time. No data leakage is introduced.
 
-## How predictions are produced
+## ⚙️ How predictions are produced
+
+```mermaid
+flowchart LR
+    A["📝 Raw booking<br/>inputs (form)"] --> B["🔧 engineer_features()<br/>deterministic, no fitting"]
+    B --> C["📐 Reindex to<br/>feature_columns"]
+    C --> D["🧠 final_pipeline.joblib<br/>ColumnTransformer.transform()<br/>+ XGBoost.predict_proba()"]
+    D --> E{"Probability ≥ 0.54?"}
+    E -->|Yes| F["❌ Predicted: CANCELED"]
+    E -->|No| G["✅ Predicted: HONORED"]
+```
 
 1. You fill in the raw booking details in the form (the same raw fields the original dataset has, before feature engineering).
 2. `engineer_features()` recomputes the same derived columns as the notebook (`total_nights`, `is_family`, `room_changed`, `prior_cancel_rate`, `lead_time_log`, etc.) — pure, deterministic transformations of the inputs you just gave.
