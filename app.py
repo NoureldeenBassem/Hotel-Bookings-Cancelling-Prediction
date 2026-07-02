@@ -253,10 +253,10 @@ with st.form("booking_form"):
     c1, c2 = st.columns(2)
     with c1:
         has_agent_input = st.checkbox("Booked through an agent", value=False)
-        agent_id = st.number_input("Agent ID", min_value=0, value=1, step=1, disabled=not has_agent_input)
+        agent_id = st.number_input("Agent ID (used only if checked above)", min_value=0, value=1, step=1)
     with c2:
         has_company_input = st.checkbox("Booked through a company", value=False)
-        company_id = st.number_input("Company ID", min_value=0, value=1, step=1, disabled=not has_company_input)
+        company_id = st.number_input("Company ID (used only if checked above)", min_value=0, value=1, step=1)
 
     st.subheader("Payment & pricing")
     c1, c2 = st.columns(2)
