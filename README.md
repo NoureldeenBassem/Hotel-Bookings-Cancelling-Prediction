@@ -1,5 +1,9 @@
 # Hotel Booking Cancellation Predictor
 
+**Built by Noureldin Bassem — Computer and AI Engineer**
+
+🔗 **Live app:** [hotel-bookings-cancelling-prediction.streamlit.app](https://hotel-bookings-cancelling-prediction-7q4gjskb3oopcu5ah7dggl.streamlit.app/)
+
 A Streamlit app that predicts whether a hotel booking will be **canceled**, using a single saved `scikit-learn` `Pipeline` (preprocessing + XGBoost model) trained in `Hotel_Booking_Cancellation_Prediction_refined.ipynb`.
 
 - **Model:** XGBoost (selected as the best of 4 candidates: Logistic Regression, Decision Tree, Random Forest, XGBoost)
@@ -33,37 +37,6 @@ This was the top priority for this deployment, so here's exactly what was verifi
 6. **Column order/set is enforced from the training artifact.** `app.py` reindexes the engineered input to `deployment_config.json["feature_columns"]` (the literal `list(X_train.columns)` saved at training time), so the `ColumnTransformer` always receives columns in the exact shape it was fit on.
 
 **Conclusion:** the deployment reuses the exact fitted pipeline object from training, never refits any preprocessing step, and reproduces only deterministic feature engineering at inference time. No data leakage is introduced.
-
-## Running locally
-
-```bash
-# 1. Clone the repo and enter it
-git clone <your-repo-url>
-cd <your-repo-folder>
-
-# 2. Create a virtual environment (recommended)
-python -m venv .venv
-source .venv/bin/activate        # Windows: .venv\Scripts\activate
-
-# 3. Install dependencies
-pip install -r requirements.txt
-
-# 4. Run the app
-streamlit run app.py
-```
-
-The app will open at `http://localhost:8501`.
-
-## Deploying to Streamlit Community Cloud
-
-1. Push this folder to a **public** (or Community-Cloud-connected private) GitHub repository, keeping `app.py`, `final_pipeline.joblib`, `deployment_config.json`, and `requirements.txt` at the repo root (or note the subfolder path in step 4).
-2. Go to [share.streamlit.io](https://share.streamlit.io) and sign in with GitHub.
-3. Click **"New app"**, then select this repository and branch.
-4. Set **Main file path** to `app.py` (adjust if it's in a subfolder).
-5. Click **Deploy**. Streamlit Cloud will install everything from `requirements.txt` and launch the app.
-6. Any time you push new commits to the connected branch, the deployed app redeploys automatically.
-
-**Note on `final_pipeline.joblib` size:** GitHub blocks files over 100 MB via normal `git push`. This file is a few MB, well under that limit, so a normal commit is fine — no Git LFS needed.
 
 ## How predictions are produced
 
