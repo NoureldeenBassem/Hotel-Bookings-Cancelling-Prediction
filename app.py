@@ -314,7 +314,7 @@ if submitted:
     # The saved Pipeline performs ALL preprocessing (imputation, frequency
     # encoding, one-hot encoding) internally via .transform(), then the
     # trained XGBoost model scores the result. Nothing is fit here.
-    probability = pipeline.predict_proba(model_input)[:, 1][0]
+    probability = float(pipeline.predict_proba(model_input)[:, 1][0])
     prediction = int(probability >= THRESHOLD)
 
     st.divider()
